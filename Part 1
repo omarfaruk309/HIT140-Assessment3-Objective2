@@ -14,3 +14,34 @@ https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/statistics
 
 Run the cells from top to bottom. Set `DOWNLOAD = True` in Block 1 to download fresh data (needs internet, about 1 minute).
 With `DOWNLOAD = False` the notebook uses the files already saved in `data/raw/`, so it runs offline.
+
+
+
+## 1. Libraries, paths and settings
+
+from pathlib import Path
+# The notebook sits inside a Part_ folder; the project root is one level up.
+ROOT = Path.cwd().parent if Path.cwd().name.startswith("Part_") else Path.cwd()
+RAW = ROOT / "data" / "raw"              # files collected from FIFA (Part 1)
+PROCESSED = ROOT / "data" / "processed"  # modelling datasets (Part 2)
+OUT = Path.cwd()                          # this part's own tables/ and figures/
+(OUT / "tables").mkdir(exist_ok=True)
+(OUT / "figures").mkdir(exist_ok=True)
+print("Project root:", ROOT)
+
+import csv
+import json
+import time
+import urllib.request
+
+import pandas as pd
+from IPython.display import display
+
+# Switch to True to download fresh data from FIFA. False = use the saved raw files.
+DOWNLOAD = False
+
+API = "https://api.fifa.com/api/v3"
+STATS_API = "https://fdh-api.fifa.com/v1/stats/match/{}/teams.json"
+WORLD_CUP = "17"          # FIFA's id for the men's World Cup
+SEASON_2026 = "285023"    # FIFA's id for the 2026 edition
+RAW.mkdir(parents=True, exist_ok=True)
