@@ -1,0 +1,16 @@
+# Part 1: Data Collection from FIFA
+
+**Objective 2, HIT140 Assessment 3.** This part collects the raw data used by both regression models.
+
+All data come from FIFA's official data feeds, which are the same feeds that load the statistics page
+https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/statistics
+
+| Feed | What it returns |
+|---|---|
+| `api.fifa.com/api/v3/calendar/matches` | list of matches, teams, scores, venues |
+| `fdh-api.fifa.com/v1/stats/match/{IdIFES}/teams.json` | 142 team statistics for one match |
+| `api.fifa.com/api/v3/rankings` | FIFA/Coca-Cola World Ranking |
+| `api.fifa.com/api/v3/seasons` | list of all World Cup editions |
+
+Run the cells from top to bottom. Set `DOWNLOAD = True` in Block 1 to download fresh data (needs internet, about 1 minute).
+With `DOWNLOAD = False` the notebook uses the files already saved in `data/raw/`, so it runs offline.
