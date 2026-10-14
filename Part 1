@@ -97,4 +97,30 @@ if DOWNLOAD:
 else:
     print("DOWNLOAD is False: skipping. The saved file is loaded in Block 7.")
 
+## 4. Download the team statistics for every match
+The statistics feed returns `{team_id: [[stat_name, value, flag], ...]}`.
+Each team in each match becomes **one row**: match details first, then all 142 statistics as columns.
+The home team is stored as `team1` and the away team as `team2`, following FIFA's fixture order.
+
+
+if DOWNLOAD:
+    rows, stat_names = [], None
+    for i, m in enumerate(matches, 1):
+        team_stats = get_json(STATS_API.format(m["Properties"]["IdIFES"]))
+        sides = [(m["Home"], m["Away"], m["HomeTeamScore"], m["AwayTeamScore"], m["HomeTeamPenaltyScore"], "team1"),
+                 (m["Away"], m["Home"], m["AwayTeamScore"], m["HomeTeamScore"], m["AwayTeamPenaltyScore"], "team2")]
+        for team, opp, goals, opp_goals, pens, listed_as in sides:
+            stat_list = team_stats[team["IdTeam"]]
+            if stat_names is None:                       # fix the column order once
+                stat_names = [s[0] for s in stat_list]
+            values = {s[0]: s[1] for s in stat_list}     # {"Goals": 2, "XG": 1.78, ...}
+            rows.append([m["MatchNumber"], m["Date"][:10], name(m["StageName"]), name(m["GroupName"]),
+                         name(team["TeamName"]), team["Abbreviation"], name(opp["TeamName"]), listed_as,
+                         goals, opp_goals, clean(pens), name(m["Stadium"]["CityName"]),
+                         m["Stadium"]["IdCountry"], m["Attendance"]]
+                        + [clean(values.get(s)) for s in stat_names])
+        print(f"match {i}/{len(matches)}", end="\r")
+    print("\nRows built:", len(rows), "| statistics per row:", len(stat_names))
+else:
+    print("DOWNLOAD is False: skipping.")
 
