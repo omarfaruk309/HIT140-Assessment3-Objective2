@@ -179,3 +179,22 @@ if DOWNLOAD:
 else:
     print("DOWNLOAD is False: skipping.")
 
+
+
+## 7. Load and inspect the saved raw files
+From here on the notebook always reads the CSV files, whether they were just downloaded or saved earlier.
+
+stats = pd.read_csv(RAW / "fifa_team_match_stats.csv")
+info = pd.read_csv(RAW / "fifa_team_info.csv")
+print("Match statistics:", stats.shape, "(rows, columns)")
+print("Team information:", info.shape)
+display(stats.iloc[:4, :16])
+
+
+# Column types and missing values for the 14 identifier columns and a few statistics.
+inspect_cols = list(stats.columns[:14]) + ["XG", "AttemptAtGoalOnTarget", "Possession", "Corners"]
+inspection = pd.DataFrame({"dtype": stats[inspect_cols].dtypes.astype(str),
+                           "missing": stats[inspect_cols].isna().sum()})
+display(inspection)
+print("Statistics columns in total:", stats.shape[1] - 14)
+
