@@ -270,5 +270,21 @@ print("Shootouts: FIFA", stats.loc[stats["penalty_score"].notna(), "match_number
 assert fifa["scores_agree"].all(), "a score differs between the two sources"
 
 
+## 9. Save a small summary table
 
+summary = pd.DataFrame({
+    "item": ["matches", "team rows", "teams", "FIFA statistics per row", "total goals",
+             "penalty shootouts", "ranking date used (pre tournament)", "scores confirmed by a second source"],
+    "value": [stats["match_number"].nunique(), len(stats), stats["team"].nunique(), stats.shape[1] - 14,
+              int(stats["goals"].sum()), stats.loc[stats["penalty_score"].notna(), "match_number"].nunique(),
+              "11 June 2026", f"{int(fifa['scores_agree'].sum())} of 104"]})
+summary.to_csv(OUT / "tables" / "part1_raw_data_summary.csv", index=False)
+display(summary)
+
+
+## Notes and limits
+* Kickoff dates are stored in UTC, as FIFA publishes them.
+* Scores include extra time but exclude penalty shootouts; shootout scores are kept in `penalty_score`.
+* One match (Belgium v Egypt) lacks 60 advanced tracking statistics, and FIFA left `GoalsConcededFromAttemptAtGoalAgainst` blank in 148 rows. None of these are used as model variables; the variables used later have no missing values.
+* FIFA may publish a newer ranking later. The saved `fifa_team_info.csv` keeps the 11 June 2026 values.
 
