@@ -78,3 +78,23 @@ def clean(value):
     if isinstance(value, float):
         return int(value) if value.is_integer() else round(value, 3)
     return value
+
+
+## 3. Download the match list
+One request returns all 104 matches. Each match holds the two teams, the score after 90 or 120 minutes,
+the penalty shootout score (if any), the stadium and an `IdIFES` number that the statistics feed needs.
+
+
+if DOWNLOAD:
+    matches = get_json(f"{API}/calendar/matches?idCompetition={WORLD_CUP}"
+                       f"&idSeason={SEASON_2026}&count=200&language=en")["Results"]
+    print("Matches downloaded:", len(matches))
+    # Show the structure of one match so the fields used later are visible.
+    first = matches[0]
+    print(name(first["Home"]["TeamName"]), first["HomeTeamScore"], "-",
+          first["AwayTeamScore"], name(first["Away"]["TeamName"]),
+          "| stats id (IdIFES):", first["Properties"]["IdIFES"])
+else:
+    print("DOWNLOAD is False: skipping. The saved file is loaded in Block 7.")
+
+
