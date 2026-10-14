@@ -124,3 +124,19 @@ if DOWNLOAD:
 else:
     print("DOWNLOAD is False: skipping.")
 
+
+## 5. Save the match statistics as CSV
+`csv.writer` turns the list of rows into a CSV file. The first row is the header.
+
+
+if DOWNLOAD:
+    header = ["match_number", "date", "stage", "group", "team", "team_code", "opponent", "listed_as",
+              "goals", "opponent_goals", "penalty_score", "city", "host_country", "attendance"] + stat_names
+    with open(RAW / "fifa_team_match_stats.csv", "w", newline="", encoding="utf-8") as f:
+        csv.writer(f).writerows([header] + rows)
+    print("Saved", RAW / "fifa_team_match_stats.csv")
+else:
+    print("DOWNLOAD is False: skipping.")
+
+
+
