@@ -138,5 +138,44 @@ if DOWNLOAD:
 else:
     print("DOWNLOAD is False: skipping.")
 
+## 6. Team information: pre tournament FIFA ranking and World Cup history
+* **Ranking.** The latest FIFA ranking (20 July 2026) also reports each team's *previous* points (`PrevPoints`).
+  That previous release is dated 11 June 2026, the opening day, so it was known before every match.
+* **History.** Counting each team's matches in the 22 World Cups from 1930 to 2022.
+  FIFA stores Germany FR and Zaire as separate teams; their matches are credited to Germany and Congo DR.
 
+
+
+PREDECESSORS = {"Germany FR": "Germany", "Zaire": "Congo DR"}
+
+if DOWNLOAD:
+    ranking = get_json(f"{API}/rankings?gender=1&count=300&language=en")["Results"]
+    if not ranking[0].get("PrePubDate", "").startswith("2026-06-11"):
+        print("WARNING: a newer ranking exists, so PrevPoints is no longer the 11 June 2026 release.")
+
+    past = {}
+    seasons = get_json(f"{API}/seasons?idCompetition={WORLD_CUP}&count=50&language=en")["Results"]
+    for s in seasons:
+        if s["IdSeason"] == SEASON_2026:
+            continue                                   # only tournaments before 2026
+        for m in get_json(f"{API}/calendar/matches?idCompetition={WORLD_CUP}"
+                          f"&idSeason={s['IdSeason']}&count=500&language=en")["Results"]:
+            for team in (m["Home"], m["Away"]):
+                if team:
+                    t = PREDECESSORS.get(name(team["TeamName"]), name(team["TeamName"]))
+                    past[t] = past.get(t, 0) + 1
+
+    wc_ids = {m[side]["IdTeam"] for m in matches for side in ("Home", "Away")}
+    info = [["team", "team_code", "confederation", "fifa_rank_pre", "fifa_points_pre",
+             "fifa_rank_post", "fifa_points_post", "wc_matches_before_2026"]]
+    for r in ranking:
+        if r["IdTeam"] in wc_ids:
+            t = name(r["TeamName"])
+            info.append([t, r["IdCountry"], r["ConfederationName"], r["PrevRank"], r["PrevPoints"],
+                         r["Rank"], r["DecimalTotalPoints"], past.get(t, 0)])
+    with open(RAW / "fifa_team_info.csv", "w", newline="", encoding="utf-8") as f:
+        csv.writer(f).writerows(info)
+    print("Saved", RAW / "fifa_team_info.csv", "|", len(info) - 1, "teams")
+else:
+    print("DOWNLOAD is False: skipping.")
 
