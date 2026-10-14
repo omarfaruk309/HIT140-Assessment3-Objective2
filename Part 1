@@ -237,4 +237,38 @@ print("Missing values in XG, shots on target, possession:",
 
 
 
+## 8b. Independent cross check against a second source
+Data from one source can contain errors, so every FIFA score is compared with an independent public dataset:
+**martj42/international_results** (https://github.com/martj42/international_results), a long running record of men's
+international results. Its World Cup 2026 rows are saved in `data/external/`. Team names differ slightly between the
+sources (for example "USA" and "United States"), so they are mapped first.
+
+
+EXTERNAL = ROOT / "data" / "external"
+ext = pd.read_csv(EXTERNAL / "martj42_wc2026_results.csv")
+ext_pens = pd.read_csv(EXTERNAL / "martj42_wc2026_shootouts.csv")
+NAME_MAP = {"USA": "United States", "Korea Republic": "South Korea", "Czechia": "Czech Republic",
+            "Türkiye": "Turkey", "Côte d'Ivoire": "Ivory Coast", "IR Iran": "Iran", "Cabo Verde": "Cape Verde",
+            "Congo DR": "DR Congo"}
+
+# One FIFA row per match (team1), with names converted to the second source's spelling.
+fifa = stats[stats["listed_as"] == "team1"].copy()
+fifa["home"] = fifa["team"].replace(NAME_MAP)
+fifa["away"] = fifa["opponent"].replace(NAME_MAP)
+
+# The second source may list a match the other way round, so match on the unordered pair of teams.
+ext_scores = {frozenset((r.home_team, r.away_team)): {r.home_team: r.home_score, r.away_team: r.away_score}
+              for r in ext.itertuples()}
+agree = []
+for r in fifa.itertuples():
+    other = ext_scores.get(frozenset((r.home, r.away)))
+    agree.append(other is not None and other[r.home] == r.goals and other[r.away] == r.opponent_goals)
+fifa["scores_agree"] = agree
+print("Matches found in both sources:", len(fifa), "| scores identical:", int(fifa["scores_agree"].sum()))
+print("Shootouts: FIFA", stats.loc[stats["penalty_score"].notna(), "match_number"].nunique(),
+      "| second source", len(ext_pens))
+assert fifa["scores_agree"].all(), "a score differs between the two sources"
+
+
+
 
