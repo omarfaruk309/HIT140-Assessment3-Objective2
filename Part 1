@@ -198,3 +198,43 @@ inspection = pd.DataFrame({"dtype": stats[inspect_cols].dtypes.astype(str),
 display(inspection)
 print("Statistics columns in total:", stats.shape[1] - 14)
 
+
+## 8. Completeness checks
+The checks stop the notebook with an error if the raw data are not what the brief requires.
+
+
+checks = {
+    "104 matches": stats["match_number"].nunique() == 104,
+    "208 team rows (2 per match)": len(stats) == 208 and (stats.groupby("match_number").size() == 2).all(),
+    "48 teams in the match file": stats["team"].nunique() == 48,
+    "48 teams in the ranking file": len(info) == 48 and set(info["team"]) == set(stats["team"]),
+    "goals equal FIFA 'Goals' statistic": (stats["goals"] == stats["Goals"]).all(),
+    "each row's opponent_goals equals the other row's goals":
+        (stats.groupby("match_number")["goals"].transform("sum") - stats["goals"] == stats["opponent_goals"]).all(),
+}
+for check, passed in checks.items():
+    print(("PASS  " if passed else "FAIL  ") + check)
+assert all(checks.values()), "A completeness check failed"
+print("\nTotal goals in the tournament (shootouts excluded):", int(stats["goals"].sum()))
+print("Matches decided on penalties:", stats.loc[stats["penalty_score"].notna(), "match_number"].nunique())
+
+
+
+# Where are values missing? Count, for each statistic, how many of the 208 rows are blank.
+missing = stats.isna().sum()
+missing = missing[missing > 0].drop(["group", "penalty_score"], errors="ignore")  # blank by design
+print(missing.value_counts().rename("number of statistics").rename_axis("rows missing").to_string())
+
+# Statistics missing in exactly 2 rows: which match?
+two = missing[missing == 2].index
+print("\nMatch missing", len(two), "tracking statistics:",
+      stats.loc[stats[two].isna().any(axis=1), ["match_number", "team"]].values.tolist())
+# Statistics missing in many rows
+print("Statistics missing in many rows:", missing[missing > 2].to_dict())
+# The model variables used later are complete.
+print("Missing values in XG, shots on target, possession:",
+      int(stats[["XG", "AttemptAtGoalOnTarget", "Possession"]].isna().sum().sum()))
+
+
+
+
